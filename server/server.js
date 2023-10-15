@@ -11,8 +11,12 @@ const io = socketIo(server, {
     },
   });
 
+const rooms = {};
+
 io.on('connection', (socket) => {
   console.log(`Connected. Socket ID: ${socket.id}`);
+  rooms[socket.id] = { user: socket.id };
+  io.emit('getRooms', rooms);
 
   socket.on('chatmsg', (message) => {
     console.log('Msg from ' + socket.id + ': ' + message);
@@ -20,6 +24,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    delete rooms[socket.id];
+    io.emit('getRooms', rooms);
     console.log(`Disconnected. Socket ID: ${socket.id}`);
   });
 });

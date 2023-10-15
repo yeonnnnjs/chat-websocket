@@ -1,54 +1,34 @@
-import React, { Component } from 'react';
-import io from 'socket.io-client';
+import React, { useState, useEffect } from 'react';
+import { socket } from './Context/socketContext';
+import { useNavigate } from "react-router-dom";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      messages: [],
-      message: '',
-    };
-    this.socket = io('http://localhost:8000');
-  }
+function App() {
+  const [rooms, setRooms] = useState([]);
+  const navigate = useNavigate();
 
-  componentDidMount() {
-    this.socket.on('chatmsg', (message) => {
-      this.setState((prevState) => ({
-        messages: [...prevState.messages, message],
-      }));
+  useEffect(() => {
+    console.log(socket.id);
+    socket.on('getRooms', (rooms) => {
+      setRooms(rooms);
     });
+  });
+
+  const handleItemClick = (room) => {
+    navigate("/chat");
   }
 
-  handleMessageChange = (e) => {
-    this.setState({ message: e.target.value });
-  };
-
-  handleSendMessage = () => {
-    const message = this.state.message;
-    this.socket.emit('chatmsg', message);
-    this.setState({ message: '' });
-  };
-
-  render() {
-    return (
+  return (
+    <div>
+      <h1>Rooms</h1>
       <div>
-        <h1>Chat</h1>
-        <div>
-          <ul>
-            {this.state.messages.map((message, index) => (
-              <li key={index}>{message}</li>
-            ))}
-          </ul>
-        </div>
-        <input
-          type="text"
-          value={this.state.message}
-          onChange={this.handleMessageChange}
-        />
-        <button onClick={this.handleSendMessage}>전송</button>
+        <ul>
+          {Object.values(rooms).map((room) => (
+            <li key={room.id} onClick={() => handleItemClick(room)}>{room.user}</li>
+          ))}
+        </ul>
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 export default App;
