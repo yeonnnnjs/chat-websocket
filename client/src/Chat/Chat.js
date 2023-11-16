@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { socket } from '../Context/socketContext';
 
-function App() {
+function Chat() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
+  const sender = "testUser"
 
   useEffect(() => {
+    
     socket.on('chatmsg', (message) => {
+      console.log(message);
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
@@ -20,7 +23,12 @@ function App() {
   };
 
   const handleSendMessage = () => {
-    socket.emit('chatmsg', message);
+    const timestamp = new Date().toLocaleString();
+    const messageType = {
+      sender, message, timestamp
+    }
+    console.log(messageType);
+    socket.emit('chatmsg', messageType);
     setMessage('');
   };
 
@@ -30,7 +38,7 @@ function App() {
       <div>
         <ul>
           {messages.map((message, index) => (
-            <li key={index}>{message}</li>
+            <li key={index}>{message.sender} {message.message} {message.timestamp}</li>
           ))}
         </ul>
       </div>
@@ -44,4 +52,4 @@ function App() {
   );
 }
 
-export default App;
+export default Chat;

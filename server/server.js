@@ -6,21 +6,33 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-      origin: "http://localhost:3000", 
-      methods: ["GET", "POST"], 
-    },
-  });
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
-const rooms = {};
+const rooms = [];
 
 io.on('connection', (socket) => {
   console.log(`Connected. Socket ID: ${socket.id}`);
-  rooms[socket.id] = { user: socket.id };
-  io.emit('getRooms', rooms);
+
+  socket.on('getRooms', (callback) => {
+    callback(rooms);
+  });
+
+  socket.on('isRoomExist', (roomName, callback) => {
+    const isRoomExist = rooms.find(room => room.roomName === roomName);
+    callback(isRoomExist);
+  });
+
+  socket.on('createRoom', (roomName) => {
+    rooms.push({ roomName });
+    socket.emit('getRoomsChange', rooms);
+  });
 
   socket.on('chatmsg', (message) => {
-    console.log('Msg from ' + socket.id + ': ' + message);
-    io.emit('chatmsg', message); 
+    console.log('Msg from ' + socket.id + ': ' + JSON.stringify(message));
+    io.emit('chatmsg', message);
   });
 
   socket.on('disconnect', () => {
@@ -30,6 +42,6 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(8000, () => {
-  console.log('running on port 8000');
+server.listen(3001, () => {
+  console.log('running on port 3001');
 });
