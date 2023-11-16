@@ -16,10 +16,9 @@ function Main() {
     });
   }, []);
 
-  const joinRoom = (e) => {
-    socket.emit("joinRoom", e.target.value);
-    socket.emit("getClientsInRoom", e.target.value);
-    navigate(`/chat/${e.target.value}`);
+  const joinRoom = (roomName) => {
+    socket.emit("joinRoom", roomName);
+    navigate(`/chat/`+roomName);
   };
 
   const handleCreateRoom = async () => {
@@ -33,6 +32,7 @@ function Main() {
       } 
       else {
         await socket.emit("createRoom", roomName);
+        localStorage.setItem("roomName", roomName);
         navigate(`/chat/${roomName}`);
       }
     }
@@ -49,7 +49,7 @@ function Main() {
       } 
       else {
         await socket.emit("joinRoom", roomName);
-        await socket.emit("getClientsInRoom", roomName);
+        localStorage.setItem("roomName", roomName);
         navigate(`/chat/${roomName}`);
       }
     }
@@ -70,7 +70,7 @@ function Main() {
         {rooms.map((room) => (
           <div key={room.roomName} className="list-item">
             {room.roomName}
-            <button type="button" onClick={(e) => joinRoom()}>입장</button>
+            <button type="button" onClick={()=>joinRoom(room.roomName)}>입장</button>
           </div>
         ))}
       </div>

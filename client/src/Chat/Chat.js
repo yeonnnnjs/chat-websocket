@@ -4,17 +4,19 @@ import { socket } from '../Context/socketContext';
 function Chat() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
-  const sender = "testUser"
+  const roomName = localStorage.getItem("roomName");
 
   useEffect(() => {
-    
-    socket.on('chatmsg', (message) => {
-      console.log(message);
-      setMessages((prevMessages) => [...prevMessages, message]);
+    socket.emit('initmsg', roomName, (data) => {
+      setMessages(data);
+    });
+
+    socket.on('getmsg', (data) => {
+      setMessages(data);
     });
 
     return () => {
-      socket.off('chatmsg');
+      socket.off('getmsg');
     };
   }, []); 
 
@@ -23,12 +25,7 @@ function Chat() {
   };
 
   const handleSendMessage = () => {
-    const timestamp = new Date().toLocaleString();
-    const messageType = {
-      sender, message, timestamp
-    }
-    console.log(messageType);
-    socket.emit('chatmsg', messageType);
+    socket.emit('sendmsg', roomName, message);
     setMessage('');
   };
 
