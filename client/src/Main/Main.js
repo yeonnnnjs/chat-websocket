@@ -18,6 +18,7 @@ function Main() {
 
   const joinRoom = (roomName) => {
     socket.emit("joinRoom", roomName);
+    localStorage.setItem("roomName", roomName);
     navigate(`/chat/`+roomName);
   };
 
