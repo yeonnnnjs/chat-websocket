@@ -23,7 +23,7 @@ const sseHeaders = {
 };
 
 // rooms
-router.get("/subscribe", (req, res) => {
+router.get("/rooms", (req, res) => {
   res.writeHead(200, sseHeaders);
 
   const sendEvent = (data) => {
@@ -41,12 +41,9 @@ router.get("/subscribe", (req, res) => {
   });
 });
 
-router.get("/rooms", (req, res) => {
-  res.send(rooms);
-});
-
-router.post("/room/create", (req, res) => {
-  const { roomName } = req.body;
+router.get("/room/create", (req, res) => {
+  const { roomName } = req.query;
+  console.log(req.params);
   const isRoomExist = rooms.find((room) => room.roomName === roomName);
   if (!isRoomExist) {
     console.log(`createRoom. room name: ${roomName}`);
@@ -58,8 +55,8 @@ router.post("/room/create", (req, res) => {
   }
 });
 
-router.post("/room/join", (req, res) => {
-  const { roomName } = req.body;
+router.get(`/room/join`, (req, res) => {
+  const { roomName } = req.query;
   const roomIndex = rooms.findIndex((room) => room.roomName === roomName);
   if (roomIndex !== -1) {
     console.log(`joinRoom. room name: ${roomName}`);
@@ -71,29 +68,41 @@ router.post("/room/join", (req, res) => {
 });
 
 // message
-router.get("/subscribe", (req, res) => {
-  res.writeHead(200, sseHeaders);
+router.get("/messages", (req, res) => {
+  const { roomName } = req.query;
+  const roomIndex = rooms.findIndex((room) => room.roomName === roomName);
 
-  const sendEvent = (data) => {
-    res.write("event: rooms\n");
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  if (roomIndex !== -1) {
+    res.writeHead(200, sseHeaders);
 
-  const intervalId = setInterval(() => {
-    sendEvent(rooms);
-  }, 3000);
+    const sendEvent = (data) => {
+      res.write("event: messages\n");
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
 
-  req.on("close", () => {
-    clearInterval(intervalId);
-    res.end();
-  });
+    const intervalId = setInterval(() => {
+      sendEvent(rooms[roomIndex].chat || []);
+    }, 1000);
+
+    req.on("close", () => {
+      clearInterval(intervalId);
+      res.end();
+    });
+  }
 });
 
-router.get("/messages", (req, res) => {
-  const { roomName } = req.body;
-  const roomIndex = rooms.findIndex((room) => room.roomName === roomName);
-  if (rooms[roomIndex].chat) {
-    res.send(rooms[roomIndex].chat);
+router.post("/message/send", (req, res) => {
+  const { roomName } = req.query;
+  const { message, sender } = req.body;
+
+  if (message) {
+    const timestamp = new Date().toLocaleString();
+    let chatData = new chat(roomName, message, sender, timestamp);
+    const roomIndex = rooms.findIndex((room) => room.roomName === roomName);
+
+    rooms[roomIndex].chat = !rooms[roomIndex].chat
+      ? [chatData]
+      : [chatData, ...rooms[roomIndex].chat];
   }
 });
 

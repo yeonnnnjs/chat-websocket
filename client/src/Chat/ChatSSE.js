@@ -4,13 +4,16 @@ function Chat() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const roomName = localStorage.getItem("roomName");
+  const userName = localStorage.getItem("userName");
 
   const subscribeSSE = async () => {
-    const eventSource = new EventSource("http://localhost:3001/subscribe");
+    const eventSource = new EventSource(
+      `http://localhost:3001/messages?roomName=${roomName}`,
+    );
 
-    eventSource.addEventListener("rooms", function (e) {
+    eventSource.addEventListener("messages", function (e) {
       const data = JSON.parse(e.data);
-      setRooms(data);
+      setMessages(data);
     });
 
     eventSource.onerror = function () {
@@ -22,17 +25,7 @@ function Chat() {
     };
   };
 
-  const getRooms = async () => {
-    await fetch("http://localhost:3001/rooms")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setRooms(data);
-      });
-  };
-
   useEffect(() => {
-    getRooms();
     subscribeSSE();
   }, []);
 
@@ -40,9 +33,15 @@ function Chat() {
     setMessage(e.target.value);
   };
 
-  const handleSendMessage = () => {
-    // socket.emit("sendmsg", roomName, message);
+  const handleSendMessage = async () => {
     setMessage("");
+    await fetch(`http://localhost:3001/message/send?roomName=${roomName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message, sender: userName }),
+    });
   };
 
   return (
